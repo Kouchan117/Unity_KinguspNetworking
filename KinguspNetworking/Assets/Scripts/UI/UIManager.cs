@@ -6,12 +6,12 @@ namespace Kingusp.UI
 {
     public class UIManager : MonoBehaviour
     {
-        public GameObject nowPanel = null;
+        private GameObject nowPanel = null;
 
         #region Method
         public void ChangePanel(GameObject nextPanel)
         {
-            if(nowPanel!=null)
+            if (nowPanel != null)
                 nowPanel.SetActive(false);
             nowPanel = nextPanel;
             nowPanel.SetActive(true);

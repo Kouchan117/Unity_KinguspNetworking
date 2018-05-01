@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
+using Kingusp.Networking;
 
 namespace Kingusp.UI
 {
@@ -9,31 +10,17 @@ namespace Kingusp.UI
     {
         #region Panel
         [SerializeField] private GameObject MainPanel;
-        [SerializeField] private GameObject HostPanel;
-        [SerializeField] private GameObject ServerPanel;
-        [SerializeField] private GameObject ClientPanel;
         #endregion Panel
 
         #region MainPanel
-        public void OnClickStartHost()
+        public void OnClickCreateMatch()
         {
-            Debug.Log("OnClickStartHost");
-            NetworkManager.singleton.StartHost();
-            ChangePanel(HostPanel);
+            MatchMaker.singleton.CreateInternetMatch("Test");
         }
 
-        public void OnClickStartServer()
+        public void OnClickFindMatch()
         {
-            Debug.Log("OnClickStartServer");
-            NetworkManager.singleton.StartServer();
-            ChangePanel(ServerPanel);
-        }
-
-        public void OnClickStartClient()
-        {
-            Debug.Log("OnClickStartClient");
-            NetworkManager.singleton.StartClient();
-            ChangePanel(ClientPanel);
+            MatchMaker.singleton.FindInternetMatch("Test");
         }
 
         public void OnClickQuit()
