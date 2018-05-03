@@ -11,6 +11,7 @@ namespace Kingusp.UI
         #region Method
         public void ChangePanel(GameObject nextPanel)
         {
+            if (nowPanel == nextPanel) return;
             if (nowPanel != null)
                 nowPanel.SetActive(false);
             nowPanel = nextPanel;

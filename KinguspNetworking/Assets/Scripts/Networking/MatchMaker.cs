@@ -9,7 +9,10 @@ namespace Kingusp.Networking
     public class MatchMaker : MonoBehaviour
     {
         public static MatchMaker singleton;
+        private string privateMatchName = "";
+        private string privatePassword = "";
 
+        #region UnityMethod
         private void Awake()
         {
             if (singleton == null)
@@ -17,19 +20,51 @@ namespace Kingusp.Networking
             else
                 DestroyObject(gameObject);
         }
+        #endregion UnityMethod
 
-        void Start()
+        #region Method
+        public void AutoInternetMatch(string matchName, string password)
         {
             NetworkManager.singleton.StartMatchMaker();
+            privateMatchName = matchName;
+            privatePassword = password;
+            Debug.Log(privateMatchName + ":" + privatePassword);
+            //NetworkManager.singleton.matchMaker.ListMatches(0, 10, privateMatchName, true, 0, 0, OnInternetMatchList);
+            NetworkManager.singleton.matchMaker.ListMatches(0, 10, "", true, 0, 0, OnInternetMatchList);
+            NetworkManager.networkState = NetworkManager.NetworkState.Connecting;
         }
-
-        //call this method to request a match to be created on the server
-        public void CreateInternetMatch(string matchName)
+        public void AutoInternetMatch()
         {
-            NetworkManager.singleton.matchMaker.CreateMatch(matchName, 4, true, "", "", "", 0, 0, OnInternetMatchCreate);
+            AutoInternetMatch("", "");
         }
 
-        //this method is called when your request for creating a match is returned
+        public void CreateInternetMatch(string matchName, string password)
+        {
+            NetworkManager.singleton.matchMaker.CreateMatch(matchName, 6, true, password, "", "", 0, 0, OnInternetMatchCreate);
+            NetworkManager.networkState = NetworkManager.NetworkState.Connecting;
+        }
+
+        public void FindInternetMatch(string matchName)
+        {
+            NetworkManager.singleton.StartMatchMaker();
+            NetworkManager.singleton.matchMaker.ListMatches(0, 10, matchName, true, 0, 0, OnInternetMatchList);
+            NetworkManager.networkState = NetworkManager.NetworkState.Connecting;
+        }
+
+        public void DisConnect()
+        {
+            switch (NetworkManager.networkState)
+            {
+                case NetworkManager.NetworkState.Nothing: break;
+                case NetworkManager.NetworkState.Host: NetworkManager.singleton.StopHost(); break;
+                case NetworkManager.NetworkState.Server: NetworkManager.singleton.StopServer(); break;
+                case NetworkManager.NetworkState.Client: NetworkManager.singleton.StopClient(); break;
+            }
+            NetworkManager.networkState = NetworkManager.NetworkState.Nothing;
+        }
+        #endregion Method
+
+        #region CallBack
         private void OnInternetMatchCreate(bool success, string extendedInfo, MatchInfo matchInfo)
         {
             if (success)
@@ -40,6 +75,7 @@ namespace Kingusp.Networking
                 NetworkServer.Listen(hostInfo, 9000);
 
                 NetworkManager.singleton.StartHost(hostInfo);
+                NetworkManager.networkState = NetworkManager.NetworkState.Host;
             }
             else
             {
@@ -47,27 +83,19 @@ namespace Kingusp.Networking
             }
         }
 
-        //call this method to find a match through the matchmaker
-        public void FindInternetMatch(string matchName)
-        {
-            NetworkManager.singleton.matchMaker.ListMatches(0, 10, matchName, true, 0, 0, OnInternetMatchList);
-        }
-
-        //this method is called when a list of matches is returned
         private void OnInternetMatchList(bool success, string extendedInfo, List<MatchInfoSnapshot> matches)
         {
             if (success)
             {
                 if (matches.Count != 0)
                 {
-                    Debug.Log("A list of matches was returned");
-
-                    //join the last server (just in case there are two...)
-                    NetworkManager.singleton.matchMaker.JoinMatch(matches[matches.Count - 1].networkId, "", "", "", 0, 0, OnJoinInternetMatch);
+                    Debug.Log("join match");
+                    NetworkManager.singleton.matchMaker.JoinMatch(matches[matches.Count - 1].networkId, privatePassword, "", "", 0, 0, OnJoinInternetMatch);
                 }
                 else
                 {
-                    Debug.Log("No matches in requested room!");
+                    Debug.Log("create match");
+                    CreateInternetMatch(privateMatchName, privatePassword);
                 }
             }
             else
@@ -76,7 +104,6 @@ namespace Kingusp.Networking
             }
         }
 
-        //this method is called when your request to join a match is returned
         private void OnJoinInternetMatch(bool success, string extendedInfo, MatchInfo matchInfo)
         {
             if (success)
@@ -85,11 +112,13 @@ namespace Kingusp.Networking
 
                 MatchInfo hostInfo = matchInfo;
                 NetworkManager.singleton.StartClient(hostInfo);
+                NetworkManager.networkState = NetworkManager.NetworkState.Client;
             }
             else
             {
                 Debug.LogError("Join match failed");
             }
         }
+        #endregion CallBack
     }
 }
